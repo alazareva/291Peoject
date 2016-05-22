@@ -2,11 +2,19 @@ import os
 import tensorflow as tf
 import numpy as np
 import pickle
-
+import time 
 from tensorflow.models.rnn import rnn_cell
 import tensorflow.python.platform
 from keras.preprocessing import sequence
 from caption_generator import Caption_Generator
+from vocabulary_builder import build_vocabulary
+
+image_features_path = '../../dataset/pca_train_feat_dict.p'
+model_path = '../model/sharath/'
+word_to_index_path = '../../dataset/word_to_index.p'
+index_to_word_path = '../../dataset/index_to_word.p'
+word_count_path = '../../dataset/word_count.p'
+annotation_path = '../../dataset/training_set_recipes.p'
 
 def get_init_bias_vector(word_counts, index_to_word_list):
 
@@ -17,43 +25,26 @@ def get_init_bias_vector(word_counts, index_to_word_list):
 
     return init_bias_vector
 
-def get_all_lists():
-
-    word_to_index_path = 'test_data/caption/caption.p'
-    word_to_index_list = pickle.load(open(word_to_index_path, "rb"))
-    index_to_word_path = ''
-    index_to_word_list = pickle.load(open(index_to_word_path, "rb"))
-    word_count_path = ''
-    word_counts = pickle.load(open(word_count_path, "rb"))
-    bias_init_vector = get_init_bias_vector(word_counts, index_to_word_list)
-
-    return word_to_index_list, index_to_word_list, bias_init_vector
-
-def train(pretrained_model_path=None):
+def train(annotation_data, image_features,word_to_index_list, index_to_word_list, bias_init_vector,pretrained_model_path=None):
 
     # TODO Move these parameters to a config file
-    number_of_epochs = 20
-    batch_size = 10
+    number_of_epochs = 1
+    batch_size = 100
     dim_word_embedding = 256
-    dim_context = 2048
+    dim_context = 512
     dim_hidden = 256
+    
     #TODO Rename context to something specific
-    context_shape = [1, 2048]
-    learning_rate = 0.001
+    context_shape = [1, 512]
+    learning_rate = 0.01
 
-    image_features_path = 'test_data/features/features.p'
-    model_path = 'test_data/model/'
-
-    word_to_index_list, index_to_word_list, bias_init_vector = get_all_lists()
-
-    #TODO Refactor the below code
-    annotation_path = 'test_data/caption/caption.p'
-    annotation_data = pickle.load(open(annotation_path, "rb"))
     captions = annotation_data.values()
-
     number_of_words = len(word_to_index_list)
-    image_features = np.load(image_features_path)
     length_of_longest_sentence = np.max(map(lambda x: len(x.split(' ')), captions))
+    print 'Length of the longest sentence is %s'%length_of_longest_sentence
+
+    #Go Crazy. Reduce the #sentences to see impact on performance
+    length_of_longest_sentence = 99
 
     session = tf.Session()
 
@@ -67,11 +58,15 @@ def train(pretrained_model_path=None):
             ctx_shape=context_shape,
             bias_init_vector=bias_init_vector)
 
-    loss, context, sentence, mask = caption_generator.build_model()
-    saver = tf.train.Saver(max_to_keep=50)
+    print "Created caption generator"
 
+    loss, context, sentence, mask = caption_generator.build_model()
+    print "Built Model Successfully"
+    
+    saver = tf.train.Saver(max_to_keep=50)
+    print 'Keep your fingers crossed. The training begins!!'
     train_op = tf.train.AdamOptimizer(learning_rate).minimize(loss)
-    tf.initialize_all_variables().run()
+    tf.initialize_all_variables().run(session=session)
 
     if pretrained_model_path is not None:
         print "Starting with pretrained model"
@@ -79,10 +74,25 @@ def train(pretrained_model_path=None):
 
     image_ids = annotation_data.keys()
 
+    print "Running through epochs now"
+
+
     for epoch in range(number_of_epochs):
+        epoch_start_time = time.time()
+        value_x = zip( \
+                range(0, len(captions), batch_size),
+                range(batch_size, len(captions), batch_size))
+        print len(value_x)
+        count = 0
         for start, end in zip( \
                 range(0, len(captions), batch_size),
                 range(batch_size, len(captions), batch_size)):
+
+            count = count + 1
+            if count >100:
+                break;
+            start_iter_time = time.time()
+            print "Start %s End %s"%(start,end)
 
             current_features = np.array([image_features[x] for x in image_ids[start:end]])
             current_features = current_features.reshape(-1, context_shape[1], context_shape[0]).swapaxes(1, 2)
@@ -90,7 +100,7 @@ def train(pretrained_model_path=None):
             current_captions = captions[start:end]
             current_caption_ind = map(
                 lambda cap: [word_to_index_list[word] for word in cap.lower().split(' ') if word in word_to_index_list],
-                current_captions)  # '.'은 제거
+                current_captions)
 
             current_caption_matrix = sequence.pad_sequences(current_caption_ind, padding='post', maxlen=length_of_longest_sentence + 1)
 
@@ -106,8 +116,30 @@ def train(pretrained_model_path=None):
                 mask: current_mask_matrix})
 
             print "Current Cost: ", loss_value
-        saver.save(session, os.path.join(model_path, 'model'), global_step=epoch)
+            print "Time taken %s"%(time.time() - start_iter_time)
+        #saver.save(session, os.path.join(model_path, 'model'), global_step=epoch)
+        print "Time taken for epoch %s is %s"%(epoch,(time.time()-epoch_start_time))
 
+
+def reduce_dataset_to_size(images, captions, size):
+    images_new = dict(images.items()[:size])
+
+    keys = images_new.keys()
+    captions_new = dict()
+    
+    for key in keys:
+        captions_new[key] = captions[key]
+
+    return images_new, captions_new
 
 if __name__ == "__main__":
-    train()
+    
+    start = time.time()
+    annotation_data = pickle.load(open(annotation_path, "rb"))
+    image_features = np.load(image_features_path)
+    images_new, captions_new = reduce_dataset_to_size(image_features, annotation_data,5000)
+    word_to_index_list, index_to_word_list, word_counts = build_vocabulary(captions_new.values())
+    bias_init_vector = get_init_bias_vector(word_counts, index_to_word_list)
+    
+    train(captions_new,images_new,word_to_index_list, index_to_word_list, bias_init_vector)
+    print "Total Time taken for training: %s"%(time.time() - start)

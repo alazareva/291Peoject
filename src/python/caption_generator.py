@@ -101,7 +101,6 @@ class Caption_Generator():
 
             context_encode = tf.nn.tanh(context_encode)
 
-            # 여기도 context_encode: 3D -> flat required
             context_encode_flat = tf.reshape(context_encode, [-1, self.dim_ctx]) # (batch_size*196, 512)
             alpha = tf.matmul(context_encode_flat, self.att_W) + self.att_b # (batch_size*196, 1)
             alpha = tf.reshape(alpha, [-1, self.ctx_shape[0]])
