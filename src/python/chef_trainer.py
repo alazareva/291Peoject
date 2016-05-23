@@ -9,12 +9,12 @@ from keras.preprocessing import sequence
 from caption_generator import Caption_Generator
 from vocabulary_builder import build_vocabulary
 
-image_features_path = '../../dataset/pca_train_feat_dict.p'
-model_path = '../model/sharath/'
-word_to_index_path = '../../dataset/word_to_index.p'
-index_to_word_path = '../../dataset/index_to_word.p'
-word_count_path = '../../dataset/word_count.p'
-annotation_path = '../../dataset/training_set_recipes.p'
+image_features_path = '../../pca_train_feat_dict.p'
+model_path = '../model/paul/'
+word_to_index_path = '../../word_to_index.p'
+index_to_word_path = '../../index_to_word.p'
+word_count_path = '../../word_count.p'
+annotation_path = '../../training_set_recipes.p'
 
 def get_init_bias_vector(word_counts, index_to_word_list):
 
@@ -29,7 +29,7 @@ def train(annotation_data, image_features,word_to_index_list, index_to_word_list
 
     # TODO Move these parameters to a config file
     number_of_epochs = 1
-    batch_size = 100
+    batch_size = 10
     dim_word_embedding = 256
     dim_context = 512
     dim_hidden = 256
@@ -41,7 +41,7 @@ def train(annotation_data, image_features,word_to_index_list, index_to_word_list
     captions = annotation_data.values()
     number_of_words = len(word_to_index_list)
     length_of_longest_sentence = np.max(map(lambda x: len(x.split(' ')), captions))
-    print 'Length of the longest sentence is %s'%length_of_longest_sentence
+    print 'Length of the longest sentence is %s' % length_of_longest_sentence
 
     #Go Crazy. Reduce the #sentences to see impact on performance
     length_of_longest_sentence = 99
@@ -135,11 +135,15 @@ def reduce_dataset_to_size(images, captions, size):
 if __name__ == "__main__":
     
     start = time.time()
+    word_to_index_list = pickle.load(open(word_to_index_path), 'rb')
+    index_to_word_list = pickle.load(open(index_to_word_path), 'rb')
+    word_counts = pickle.load(open(word_counts_path), 'rb')    
+
     annotation_data = pickle.load(open(annotation_path, "rb"))
     image_features = np.load(image_features_path)
-    images_new, captions_new = reduce_dataset_to_size(image_features, annotation_data,5000)
-    word_to_index_list, index_to_word_list, word_counts = build_vocabulary(captions_new.values())
+    #images_new, captions_new = reduce_dataset_to_size(image_features, annotation_data,5000)
+    #word_to_index_list, index_to_word_list, word_counts = build_vocabulary(captions_new.values())
     bias_init_vector = get_init_bias_vector(word_counts, index_to_word_list)
     
-    train(captions_new,images_new,word_to_index_list, index_to_word_list, bias_init_vector)
+    train(annotation_data,image_features, word_to_index_list, index_to_word_list, bias_init_vector)
     print "Total Time taken for training: %s"%(time.time() - start)

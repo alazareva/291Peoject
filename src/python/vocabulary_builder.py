@@ -3,7 +3,7 @@ import pickle
 
 def build_vocabulary(sentence_iterator, word_count_threshold=0, save_variables=False): # borrowed this function from NeuralTalk
 
-    print 'preprocessing word counts and creating vocab based on word count threshold %d' % (word_count_threshold, )
+    print 'preprocessing word counts and creating vocab based on word count threshold %d' % (word_count_threshold )
     length_of_longest_sentence = np.max(map(lambda x: len(x.split(' ')), sentence_iterator))
     print 'Length of the longest sentence is %s'%length_of_longest_sentence
     word_counts = {}
@@ -42,7 +42,7 @@ def build_vocabulary(sentence_iterator, word_count_threshold=0, save_variables=F
 
 if __name__ == "__main__":
 
-    annotation_path = '../../dataset/training_set_recipes.p'
+    annotation_path = '../../training_set_recipes.p'
     annotation_data = pickle.load(open(annotation_path, "rb"))
     captions = annotation_data.values()
-    build_vocabulary(captions)
+    build_vocabulary(captions, save_variables=True)
