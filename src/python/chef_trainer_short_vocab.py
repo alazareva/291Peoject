@@ -100,14 +100,14 @@ def train(annotation_data, image_features,word_to_index_list, index_to_word_list
             print "Current Cost: ", loss_value
             print "Time taken %s"%(time.time() - start_iter_time)
 
-        model_name = 'model %s', %epoch
+        model_name = "model"+str(epoch)
         saver.save(session, os.path.join(model_path, model_name), global_step=epoch)
         print "Time taken for epoch %s is %s"%(epoch,(time.time()-epoch_start_time))
 
 
 def reduce_dataset_to_size(images, captions, size):
     if size ==-1:
-    return images, captions
+        return images, captions
 
     images_new = dict(images.items()[:size])
 
@@ -127,9 +127,6 @@ if __name__ == "__main__":
     
     config = ConfigParser.ConfigParser()
     config.read(config_file_path)
-    config.get(hyperparam, entry)
-    config.get(file_paths, entry)
-   
     image_features_path = config.get(file_paths, 'image_features_path')
     model_path = config.get(file_paths, 'model_path')
     word_to_index_path = config.get(file_paths, 'word_to_index_path')
@@ -137,24 +134,24 @@ if __name__ == "__main__":
     word_count_path = config.get(file_paths, 'word_count_path')
     annotation_path = config.get(file_paths, 'annotation_path')
 
-    number_of_epochs = config.get(hyperparam, 'number_of_epochs')
-    batch_size = config.get(hyperparam, 'batch_size')
-    dim_word_embedding = config.get(hyperparam, 'dim_word_embedding')
-    dim_context = config.get(hyperparam, 'dim_context')
-    dim_hidden = config.get(hyperparam, 'dim_hidden')
-    context_shape_start =config.get(hyperparam, 'context_shape_start')
-    context_shape_end =config.get(hyperparam, 'context_shape_end')
-    learning_rate =config.get(hyperparam, 'learning_rate')
+    number_of_epochs = int(config.get(hyperparam, 'number_of_epochs'))
+    batch_size = int(config.get(hyperparam, 'batch_size'))
+    dim_word_embedding = int(config.get(hyperparam, 'dim_word_embedding'))
+    dim_context = int(config.get(hyperparam, 'dim_context'))
+    dim_hidden = int(config.get(hyperparam, 'dim_hidden'))
+    context_shape_start = int(config.get(hyperparam, 'context_shape_start'))
+    context_shape_end = int(config.get(hyperparam, 'context_shape_end'))
+    learning_rate = float(config.get(hyperparam, 'learning_rate'))
 
     start = time.time()
-    word_to_index_list = pickle.load(open(word_to_index_path), 'rb')
-    index_to_word_list = pickle.load(open(index_to_word_path), 'rb')
-    word_counts = pickle.load(open(word_counts_path), 'rb')    
+    #word_to_index_list = pickle.load(open(word_to_index_path), 'rb')
+    #index_to_word_list = pickle.load(open(index_to_word_path), 'rb')
+    #word_counts = pickle.load(open(word_counts_path), 'rb')    
 
     annotation_data = pickle.load(open(annotation_path, "rb"))
     image_features = np.load(image_features_path)
     images_new, captions_new = reduce_dataset_to_size(image_features, annotation_data,-1)
-    #word_to_index_list, index_to_word_list, word_counts = build_vocabulary(captions_new.values())
+    word_to_index_list, index_to_word_list, word_counts = build_vocabulary(captions_new.values())
     bias_init_vector = get_init_bias_vector(word_counts, index_to_word_list)
     
     train(annotation_data,image_features, word_to_index_list, index_to_word_list, bias_init_vector,number_of_epochs,
