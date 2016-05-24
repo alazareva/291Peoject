@@ -14,7 +14,7 @@ def build_vocabulary(sentence_iterator, save_variables=False,word_count_threshol
     print 'preprocessing word counts and creating vocab based on word count threshold %d' % (word_count_threshold )
     length_of_longest_sentence = np.max(map(lambda x: len(x.split(' ')), sentence_iterator))
     print 'Length of the longest sentence is %s'%length_of_longest_sentence
-    pickle.dump(length_of_longest_sentence, open('maxlen.p', "wb"))
+    pickle.dump(length_of_longest_sentence, open('../../config/maxlen.p', "wb"))
     word_counts = {}
     number_of_sentences = 0
     for sentence in sentence_iterator:

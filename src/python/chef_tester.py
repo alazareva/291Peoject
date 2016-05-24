@@ -20,7 +20,8 @@ def test():
     word_to_index_path = config.get(file_paths, 'word_to_index_path')
     index_to_word_path = config.get(file_paths, 'index_to_word_path')
     length_of_longest_sentence_path = config.get(file_paths, 'length_of_longest_sentence_path')
-    test_feat = config.get(file_paths, 'test_image_features_path') 
+    test_feat = config.get(file_paths, 'test_image_features_path')
+    predicted_recipes_path = config.get(file_paths, 'predicted_recipes_path')
 
     batch_size = int(config.get(hyperparam, 'batch_size'))
     dim_word_embedding = int(config.get(hyperparam, 'dim_word_embedding'))
@@ -45,12 +46,12 @@ def test():
 
     caption_generator = Caption_Generator(
             n_words=n_words,
-            dim_word_embedding=dim_word_embedding,
-            dim_context=dim_context,
+            dim_embed=dim_word_embedding,
+            dim_ctx=dim_context,
             dim_hidden=dim_hidden,
             n_lstm_steps=length_of_longest_sentence,
             batch_size=batch_size,
-            context_shape=context_shape)
+            ctx_shape=context_shape)
 
     context, generated_words, logit_list, alpha_list = caption_generator.build_generator(maxlen=length_of_longest_sentence)
     saver = tf.train.Saver()
@@ -64,6 +65,9 @@ def test():
         generated_word_index = session.run(generated_words, feed_dict={context:test_image_feature})
         words = [index_to_word_list[x[0]] for x in generated_word_index]
         generated_recipes[rec] = ' '.join(words)
+
+    print "Saving generated recipes .."
+    pickle.dump(generated_recipes, open(predicted_recipes_path,"wb"))
 
     return generated_recipes
 
