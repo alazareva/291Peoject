@@ -119,6 +119,15 @@ def reduce_dataset_to_size(images, captions, size):
 
     return images_new, captions_new
 
+def trim_sentence_length(captions, trim_to_size):
+    new_dict = dict()
+    
+    for key in captions.keys():
+        print type(captions[key])
+        new_dict[key] = trim(captions[key])
+
+    return new_dict
+
 if __name__ == "__main__":
 
     config_file_path = 'config.ini'
