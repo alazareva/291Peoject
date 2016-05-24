@@ -1,11 +1,20 @@
 import numpy as np
 import pickle
+import ConfigParser
 
-def build_vocabulary(sentence_iterator, word_count_threshold=0, save_variables=False): # borrowed this function from NeuralTalk
+def build_vocabulary(sentence_iterator, save_variables=False,word_count_threshold =0): # borrowed this function from NeuralTalk
+
+    file_paths = 'Files'
+    config = ConfigParser.ConfigParser()
+    config.read('config.ini')
+    word_to_index_path = config.get(file_paths, 'word_to_index_path')
+    index_to_word_path = config.get(file_paths, 'index_to_word_path')
+    word_count_path = config.get(file_paths, 'word_count_path')
 
     print 'preprocessing word counts and creating vocab based on word count threshold %d' % (word_count_threshold )
     length_of_longest_sentence = np.max(map(lambda x: len(x.split(' ')), sentence_iterator))
     print 'Length of the longest sentence is %s'%length_of_longest_sentence
+    pickle.dump(length_of_longest_sentence, open('maxlen.p', "wb"))
     word_counts = {}
     number_of_sentences = 0
     for sentence in sentence_iterator:
@@ -30,19 +39,8 @@ def build_vocabulary(sentence_iterator, word_count_threshold=0, save_variables=F
 
     if save_variables:
         print 'Completed processing captions. Saving work now ...'
-        word_to_index_path = '../../dataset/word_to_index.p'
-        index_to_word_path = '../../dataset/index_to_word.p'
-        word_count_path = '../../dataset/word_count.p'
         pickle.dump(word_to_index_list, open(word_to_index_path, "wb"))
         pickle.dump(index_to_word_list, open(index_to_word_path, "wb"))
         pickle.dump(word_counts, open(word_count_path, "wb"))
 
     return word_to_index_list, index_to_word_list, word_counts
-
-
-if __name__ == "__main__":
-
-    annotation_path = '../../training_set_recipes.p'
-    annotation_data = pickle.load(open(annotation_path, "rb"))
-    captions = annotation_data.values()
-    build_vocabulary(captions, save_variables=True)

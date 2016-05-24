@@ -3,8 +3,8 @@ import tensorflow as tf
 import numpy as np
 import pickle
 import time 
-from tensorflow.models.rnn import rnn_cell
-import tensorflow.python.platform
+
+
 from keras.preprocessing import sequence
 from caption_generator import Caption_Generator
 from vocabulary_builder import build_vocabulary
@@ -121,14 +121,22 @@ def reduce_dataset_to_size(images, captions, size):
 
 def trim_sentence_length(captions, trim_to_size):
     new_dict = dict()
-    
+    #sentence_lenths = list()
+
     for key in captions.keys():
-        print type(captions[key])
-        new_dict[key] = trim(captions[key])
+        recipe = captions[key]
+        words = recipe.lower().split(' ')
+        list_of_words = words[:trim_to_size]
+        new_dict[key]  = ' '.join(map(unicode, list_of_words))
+        #sentence_lenths.append(len(new_dict[key]))
+
+    #print np.max(sentence_lenths)
 
     return new_dict
 
 if __name__ == "__main__":
+
+    start = time.time()
 
     config_file_path = 'config.ini'
     hyperparam = 'Hyperparams'
@@ -152,15 +160,17 @@ if __name__ == "__main__":
     context_shape_end = int(config.get(hyperparam, 'context_shape_end'))
     learning_rate = float(config.get(hyperparam, 'learning_rate'))
 
-    start = time.time()
+    
     #word_to_index_list = pickle.load(open(word_to_index_path), 'rb')
     #index_to_word_list = pickle.load(open(index_to_word_path), 'rb')
     #word_counts = pickle.load(open(word_counts_path), 'rb')    
 
-    annotation_data = pickle.load(open(annotation_path, "rb"))
+    annotation_data_raw = pickle.load(open(annotation_path, "rb"))
+    annotation_data = trim_sentence_length(annotation_data_raw, trim_to_size =300)
+
     image_features = np.load(image_features_path)
     images_new, captions_new = reduce_dataset_to_size(image_features, annotation_data,-1)
-    word_to_index_list, index_to_word_list, word_counts = build_vocabulary(captions_new.values())
+    word_to_index_list, index_to_word_list, word_counts = build_vocabulary(captions_new.values(), save_variables=True)
     bias_init_vector = get_init_bias_vector(word_counts, index_to_word_list)
     
     train(annotation_data,image_features, word_to_index_list, index_to_word_list, bias_init_vector,number_of_epochs,
