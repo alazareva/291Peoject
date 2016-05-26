@@ -59,7 +59,6 @@ def test():
     print("Model Restored")
     
     for rec in test_image_features.keys():
-        print("processing",rec)
         test_image_feature = np.array(test_image_features[rec])
         test_image_feature = test_image_feature.reshape(-1, context_shape[1], context_shape[0]).swapaxes(1,2)
         generated_word_index = session.run(generated_words, feed_dict={context:test_image_feature})
