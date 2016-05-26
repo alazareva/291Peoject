@@ -52,12 +52,15 @@ def train(annotation_data, image_features,word_to_index_list, index_to_word_list
     val_captions = None
     val_metric = None
     if X_val is not None and y_val is not None:
-        context, generated_words, logit_list, alpha_list = caption_generator.build_generator(maxlen=length_of_longest_sentence)
+        _, generated_words, logit_list, alpha_list = caption_generator.build_generator(maxlen=length_of_longest_sentence)
         print "Built Generator Successfully"
         val_features = pickle.load(open(X_val,"rb"))
         val_captions = pickle.load(open(y_val,"rb"))
+        val_captions = trim_sentence_length(val_captions, trim_to_size =300)
         val_metric = Evaluation_Metric()
-    
+        val_features, val_captions = reduce_dataset_to_size(val_features, val_captions, 10)    
+
+
     saver = tf.train.Saver(max_to_keep=None)
     print 'Keep your fingers crossed. The training begins!!'
     train_op = tf.train.AdamOptimizer(learning_rate).minimize(loss)
@@ -112,18 +115,24 @@ def train(annotation_data, image_features,word_to_index_list, index_to_word_list
 
             print "Current Cost: ", loss_value
 
-            if val_features is not None and val_captions is not None:
+            print "Time taken %s"%(time.time() - start_iter_time)
+
+        if val_features is not None and val_captions is not None:
+            if True:    
                 generated_recipes = {}
                 for rec in val_features.keys():
-                    test_image_feature = np.array(test_image_features[rec])
-                    test_image_feature = test_image_feature.reshape(-1, context_shape[1], context_shape[0]).swapaxes(1,2)
-                    generated_word_index = session.run(generated_words, feed_dict={context:test_image_feature})
+                    test_image_feature = np.array(val_features[rec])
+                    test_image_feature = test_image_feature.reshape(-1, context_shape[1],
+                                                                        context_shape[0]
+                                                                    ).swapaxes(1,2)
+                    generated_word_index = session.run(generated_words, 
+                                                       feed_dict={context:test_image_feature})
                     words = [index_to_word_list[x[0]] for x in generated_word_index]
                     generated_recipes[rec] = ' '.join(words)
                 
                 print "Current Velication Metric: ", val_metric.evaluate(val_captions,generated_recipes)
 
-            print "Time taken %s"%(time.time() - start_iter_time)
+            #print "Time taken %s"%(time.time() - start_iter_time)
 
         saver.save(session, os.path.join(model_path, 'model'), global_step=epoch)
         print "Time taken for epoch %s is %s"%(epoch,(time.time()-epoch_start_time))
@@ -199,11 +208,13 @@ if __name__ == "__main__":
     annotation_data = trim_sentence_length(annotation_data_raw, trim_to_size =300)
 
     image_features = np.load(image_features_path)
-    images_new, captions_new = reduce_dataset_to_size(image_features, annotation_data, size=100)
+    images_new, captions_new = reduce_dataset_to_size(image_features, annotation_data, -1)
+    #X_val_new, y_val_new = reduce_dataset_to_size(X_val, y_val, 100)
 
     word_to_index_list, index_to_word_list, word_counts = build_vocabulary(captions_new.values(), save_variables=True)
     bias_init_vector = get_init_bias_vector(word_counts, index_to_word_list)
-    
-    train(annotation_data,image_features, word_to_index_list, index_to_word_list, bias_init_vector,number_of_epochs,
+   
+    with tf.device('/cpu:0'): 
+        train(annotation_data,image_features, word_to_index_list, index_to_word_list, bias_init_vector,number_of_epochs,
     batch_size,dim_word_embedding,dim_context,dim_hidden,context_shape_start, context_shape_end, learning_rate,X_val,y_val)
-    print "Total Time taken for training: %s"%(time.time() - start)
+        print "Total Time taken for training: %s"%(time.time() - start)
