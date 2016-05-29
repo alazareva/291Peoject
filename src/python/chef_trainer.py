@@ -7,7 +7,7 @@ import time
 
 from keras.preprocessing import sequence
 from caption_generator import Caption_Generator
-from vocabulary_builder import build_vocabulary
+from vocabulary_builder_al_parser import build_vocabulary
 import ConfigParser
 
 def get_init_bias_vector(word_counts, index_to_word_list):
