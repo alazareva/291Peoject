@@ -16,7 +16,7 @@ def build_vocabulary(recipe_iterator, save_variables=False,word_count_threshold 
 
     print 'preprocessing word counts and creating vocab based on word count threshold %d' % (word_count_threshold )
     length_of_longest_recipe = np.max(map(lambda x: len(tokenizer.tokenize(x)), recipe_iterator))
-    print 'Length of the longest sentence is %s'%length_of_longest_sentence
+    print 'Length of the longest sentence is %s'%length_of_longest_recipe
     pickle.dump(length_of_longest_recipe, open('../../config/maxlen.p', "wb"))
     word_counts = {}
     number_of_recipes = 0
