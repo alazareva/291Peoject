@@ -65,14 +65,11 @@ def train(annotation_data, image_features,word_to_index_list, index_to_word_list
                 range(0, len(captions), batch_size),
                 range(batch_size, len(captions), batch_size))
         print len(value_x)
-        count = 0
+        
         for start, end in zip( \
                 range(0, len(captions), batch_size),
                 range(batch_size, len(captions), batch_size)):
 
-            count = count + 1
-            if count >100:
-                break;
             start_iter_time = time.time()
             #print "Start %s End %s"%(start,end)
 
@@ -97,8 +94,9 @@ def train(annotation_data, image_features,word_to_index_list, index_to_word_list
                 sentence: current_caption_matrix,
                 mask: current_mask_matrix})
 
-            print "Current Cost: ", loss_value
-            print "Time taken %s"%(time.time() - start_iter_time)
+            if start % 1000 == 0:
+            	print "Current Cost: ", loss_value
+            	print "Time taken %s"%(time.time() - start_iter_time)
 
         if epoch % 5 == 0:
         	saver.save(session, os.path.join(model_path, 'model'), global_step=epoch)
