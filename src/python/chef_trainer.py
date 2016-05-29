@@ -172,9 +172,11 @@ if __name__ == "__main__":
     image_features = np.load(image_features_path)
     images_new, captions_new = reduce_dataset_to_size(image_features, annotation_data, size=-1)
 
+    print "Shape of image %s"%images_new.shape()
+
     word_to_index_list, index_to_word_list, word_counts = build_vocabulary(captions_new.values(), save_variables=True)
     bias_init_vector = get_init_bias_vector(word_counts, index_to_word_list)
     
-    train(annotation_data,image_features, word_to_index_list, index_to_word_list, bias_init_vector,number_of_epochs,
+    train(captions_new,images_new, word_to_index_list, index_to_word_list, bias_init_vector,number_of_epochs,
     batch_size,dim_word_embedding,dim_context,dim_hidden,context_shape_start, context_shape_end, learning_rate)
     print "Total Time taken for training: %s"%(time.time() - start)
