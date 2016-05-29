@@ -58,6 +58,9 @@ def train(annotation_data, image_features,word_to_index_list, index_to_word_list
 
     print "Running through epochs now"
 
+    epoch_loss = dict()
+    epoch_time = dict()
+    
 
     for epoch in range(number_of_epochs):
         epoch_start_time = time.time()
@@ -65,7 +68,7 @@ def train(annotation_data, image_features,word_to_index_list, index_to_word_list
                 range(0, len(captions), batch_size),
                 range(batch_size, len(captions), batch_size))
         print len(value_x)
-        
+        loss_list = list()
         for start, end in zip( \
                 range(0, len(captions), batch_size),
                 range(batch_size, len(captions), batch_size)):
@@ -94,13 +97,21 @@ def train(annotation_data, image_features,word_to_index_list, index_to_word_list
                 sentence: current_caption_matrix,
                 mask: current_mask_matrix})
 
+            loss_list.append(loss_value)
+
             if start % 1000 == 0:
-            	print "Current Cost: ", loss_value
+            	print "Current Cost: %s Current Epoch: %s", %(loss_value,epoch)
             	print "Time taken %s"%(time.time() - start_iter_time)
 
+        epoch_loss[epoch] = loss_list
+        end_time =time.time()
+        epoch_time[epoch] = (end_time - epoch_start_time)
         if epoch % 5 == 0:
         	saver.save(session, os.path.join(model_path, 'model'), global_step=epoch)
-        print "Time taken for epoch %s is %s"%(epoch,(time.time()-epoch_start_time))
+        print "Time taken for epoch %s is %s"%(epoch,(end_time - epoch_start_time))
+
+    pickle.dump(epoch_loss,open("training_loss.p","wb"))
+    pickle.dump(epoch_time,open("training_time.p","wb"))
 
 
 def reduce_dataset_to_size(images, captions, size):
@@ -172,7 +183,7 @@ if __name__ == "__main__":
     image_features = np.load(image_features_path)
     images_new, captions_new = reduce_dataset_to_size(image_features, annotation_data, size=-1)
 
-    print "Shape of image %s"%images_new.shape()
+    print "Shape of image %s"%len(images_new)
 
     word_to_index_list, index_to_word_list, word_counts = build_vocabulary(captions_new.values(), save_variables=True)
     bias_init_vector = get_init_bias_vector(word_counts, index_to_word_list)
