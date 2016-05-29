@@ -1,6 +1,7 @@
 import numpy as np
 import pickle
 import ConfigParser
+from nltk.tokenize import WordPunctTokenizer
 
 def build_vocabulary(recipe_iterator, save_variables=False,word_count_threshold =0): # borrowed this function from NeuralTalk
 
