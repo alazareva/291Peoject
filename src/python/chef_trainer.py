@@ -100,7 +100,8 @@ def train(annotation_data, image_features,word_to_index_list, index_to_word_list
             print "Current Cost: ", loss_value
             print "Time taken %s"%(time.time() - start_iter_time)
 
-        saver.save(session, os.path.join(model_path, 'model'), global_step=epoch)
+        if epoch % 5 == 0:
+        	saver.save(session, os.path.join(model_path, 'model'), global_step=epoch)
         print "Time taken for epoch %s is %s"%(epoch,(time.time()-epoch_start_time))
 
 
