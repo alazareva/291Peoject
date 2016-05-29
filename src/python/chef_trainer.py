@@ -99,10 +99,6 @@ def train(annotation_data, image_features,word_to_index_list, index_to_word_list
 
             loss_list.append(loss_value)
 
-            if start % 1000 == 0:
-            	print "Current Cost: %s Current Epoch: %s", %(loss_value,epoch)
-            	print "Time taken %s"%(time.time() - start_iter_time)
-
         epoch_loss[epoch] = loss_list
         end_time =time.time()
         epoch_time[epoch] = (end_time - epoch_start_time)
