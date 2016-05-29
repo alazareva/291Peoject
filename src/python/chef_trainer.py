@@ -169,10 +169,10 @@ if __name__ == "__main__":
     #word_counts = pickle.load(open(word_counts_path), 'rb')    
 
     annotation_data_raw = pickle.load(open(annotation_path, "rb"))
-    annotation_data = trim_sentence_length(annotation_data_raw, trim_to_size =300)
+    annotation_data = trim_sentence_length(annotation_data_raw, trim_to_size =25)
 
     image_features = np.load(image_features_path)
-    images_new, captions_new = reduce_dataset_to_size(image_features, annotation_data, size=100)
+    images_new, captions_new = reduce_dataset_to_size(image_features, annotation_data, size=-1)
 
     word_to_index_list, index_to_word_list, word_counts = build_vocabulary(captions_new.values(), save_variables=True)
     bias_init_vector = get_init_bias_vector(word_counts, index_to_word_list)
