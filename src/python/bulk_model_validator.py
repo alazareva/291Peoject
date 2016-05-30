@@ -13,6 +13,8 @@ def bulk_validator(suffix):
     config_file_path = 'config.ini'
     hyperparam = 'Hyperparams'
     file_paths = 'Files'
+
+    val_metric = Evaluation_Metric()
     
     config = ConfigParser.ConfigParser()
     config.read(config_file_path)
@@ -30,8 +32,8 @@ def bulk_validator(suffix):
     context_shape_start = int(config.get(hyperparam, 'context_shape_start'))
     context_shape_end = int(config.get(hyperparam, 'context_shape_end'))
     model_path = config.get(file_paths,'model_path')
-    model_path = model_path + "model-%s",suffix
-    predicted_recipes_path = "predicted_recipes%s"suffix
+    model_path = model_path + "model-%s"%suffix
+    predicted_recipes_path = "predicted_recipes%s"%suffix
 
     context_shape = [context_shape_start, context_shape_end]
     
@@ -59,7 +61,7 @@ def bulk_validator(suffix):
     context, generated_words, logit_list, alpha_list = caption_generator.build_generator(maxlen=length_of_longest_sentence)
     saver = tf.train.Saver()
     saver.restore(session, model_path)
-    print("Model Restored")
+    print("Model Restored-%s"%model_path)
     
     for rec in val_image_features.keys():
         val_image_feature = np.array(val_image_features[rec])
@@ -71,7 +73,7 @@ def bulk_validator(suffix):
     val_recipes = pickle.load(open(val_recipe_path, "rb"))
     metric = val_metric.evaluate(val_recipes,generated_recipes)
     print "Current Velication Metric: ", metric
-    pickle.dump(metric,open("metric"+%s,suffix+".p", "wb"))
+    pickle.dump(metric,open("metric-%s.p"%suffix, "wb"))
 
     print "Saving generated recipes .."
     pickle.dump(generated_recipes, open(predicted_recipes_path,"wb"))
@@ -81,8 +83,7 @@ def bulk_validator(suffix):
 if __name__ == "__main__":
 
     start = time.time()
-    epoch = 19
-    for i in range(0:epoch): 
-        generated_recipes = bulk_validator(i)
+    model_number = 5
+    generated_recipes = bulk_validator(model_number)
 
-    print "Total Time taken for validating %s models: %s"%(epoch, (time.time() - start))
+    print "Total Time taken for validating %s models: %s"%(model_number, (time.time() - start))
