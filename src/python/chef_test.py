@@ -7,7 +7,7 @@ import time
 from caption_generator import Caption_Generator
 from evaluation_metrics import Evaluation_Metric
 
-def bulk_validator(suffix):
+def run_test(suffix):
 
     #Getting all the parameters from configuration file
     config_file_path = 'config.ini'
@@ -84,6 +84,6 @@ if __name__ == "__main__":
 
     start = time.time()
     model_number = 5
-    generated_recipes = bulk_validator(model_number)
+    generated_recipes = run_test(model_number)
 
     print "Total Time taken for validating %s models: %s"%(model_number, (time.time() - start))
