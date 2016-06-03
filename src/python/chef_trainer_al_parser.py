@@ -61,6 +61,8 @@ def train(annotation_data, image_features,word_to_index_list, index_to_word_list
 
     print "Running through epochs now"
 
+	epoch_loss = dict()
+    epoch_time = dict()
 
     for epoch in range(number_of_epochs):
         epoch_start_time = time.time()
@@ -68,14 +70,12 @@ def train(annotation_data, image_features,word_to_index_list, index_to_word_list
                 range(0, len(captions), batch_size),
                 range(batch_size, len(captions), batch_size))
         print len(value_x)
-        count = 0
+        loss_list = list()
         for start, end in zip( \
                 range(0, len(captions), batch_size),
                 range(batch_size, len(captions), batch_size)):
 
-            count = count + 1
-            if count >100:
-                break;
+            
             start_iter_time = time.time()
             #print "Start %s End %s"%(start,end)
 
@@ -100,12 +100,18 @@ def train(annotation_data, image_features,word_to_index_list, index_to_word_list
                 sentence: current_caption_matrix,
                 mask: current_mask_matrix})
 
-            print "Current Cost: ", loss_value
-            print "Time taken %s"%(time.time() - start_iter_time)
+            loss_list.append(loss_value)
 
-        saver.save(session, os.path.join(model_path, 'model'), global_step=epoch)
-        print "Time taken for epoch %s is %s"%(epoch,(time.time()-epoch_start_time))
+        epoch_loss[epoch] = loss_list
+        end_time =time.time()
+        epoch_time[epoch] = (end_time - epoch_start_time)
+        if epoch % 5 == 0:
+        	saver.save(session, os.path.join(model_path, 'model'), global_step=epoch)
+        print "Time taken for epoch %s is %s"%(epoch,(end_time - epoch_start_time))
 
+	    pickle.dump(epoch_loss,open("training_loss.p","wb"))
+	    pickle.dump(epoch_time,open("training_time.p","wb"))
+ 
 
 def reduce_dataset_to_size(images, captions, size):
     if size ==-1:
